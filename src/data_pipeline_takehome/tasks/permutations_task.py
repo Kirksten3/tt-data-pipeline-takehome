@@ -1,16 +1,22 @@
-from data_pipeline_takehome.tasks.task_decorator import task
+from typing import List
+from .task_decorator import task
+
+cache = {}
 
 
-@task(failure_rate=0.01)
-def permutations(word: str):
+def permutations(word: str) -> List[str]:
+    global cache
     if len(word) == 0:
         return []
     if len(word) == 1:
         return [word]
 
-    chars = list(word)
+    chars = sorted(list(word))
+    sort_word = "".join(chars)
+    if sort_word in cache:
+        return cache[sort_word]
 
-    perms = []
+    perms = set()
     for i in range(len(chars)):
         first_char = chars[i]
         tail = chars.copy()
@@ -22,6 +28,13 @@ def permutations(word: str):
         tail_perms = permutations("".join(tail))
 
         for tail_perm in tail_perms:
-            perms.append(first_char + tail_perm)
+            perms.add(first_char + tail_perm)
 
-    return perms
+        cache[sort_word] = perms
+
+    return list(perms)
+
+
+@task(failure_rate=0.01)
+def task_permutations(word: str) -> List[str]:
+    return list(permutations(word))

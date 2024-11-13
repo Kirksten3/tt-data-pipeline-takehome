@@ -1,19 +1,25 @@
-import json
+import os
+from typing import Dict, List
 
-from data_pipeline_takehome.tasks.permutations_task import permutations
+from data_pipeline_takehome.resources.gcs import load_file_or_backup
 from data_pipeline_takehome.tasks.task_decorator import task
+from data_pipeline_takehome.utilities.tasks import ConfigurationManager
 
-with open("src/data_pipeline_takehome/resources/english_dictionary.json") as file:
-    english_dictionary = json.load(file)
+
+def find_anagrams(permutations: List[str], dictionary: Dict[str, str]) -> List[str]:
+    return list({p.lower(): True for p in permutations if p.lower() in dictionary})
 
 
 @task(failure_rate=0.1)
-def find_anagrams(word: str):
-    perms = ["".join(p) for p in permutations(word)]
-    anagrams = {}
-    for p in perms:
-        p_lower = p.lower()
-        if p_lower in english_dictionary:
-            anagrams[p_lower] = True
-
-    return list(anagrams)
+def task_find_anagrams(
+    config: ConfigurationManager, permutations: List[str]
+) -> List[str]:
+    config.logger.info("Loading dictionary.")
+    dictionary = load_file_or_backup(
+        os.getenv("GCS_BUCKET"),
+        "english_dictionary.json",
+        "src/data_pipeline_takehome/resources/english_dictionary.json",
+    )
+    if dictionary is not None:
+        config.logger.info("Dictionary Loaded.")
+    return find_anagrams(permutations, dictionary)

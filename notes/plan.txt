@@ -1,0 +1,19 @@
+- Add logging support
+    - done
+- Have task decorator log, provide logging context to tasks
+    - done
+- Type checking, input and output
+    - done
+- All "tasks" top-level in a pipeline
+    - done
+- Add support for threading, no loops at top level
+    - ideally multi-execution wouldn't take place at the thread level
+- No tasks that depend on other tasks
+    - done
+- Move task execution to separate libraries
+    - done
+- Move resource loading to S3/GCS, with local backup
+    - done
+- Configuration setup, include dotenv
+    - mostly done
+- Unit tests

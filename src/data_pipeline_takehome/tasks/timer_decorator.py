@@ -10,7 +10,7 @@ def timer(_func=None, label: str = "_"):
             result = func(*args, **kwargs)
             stop = time.perf_counter()
             print(f"{label}({args}) took {(stop-start)*1000}ms")
-            return result
+            return {"result": result, "runtime": (stop - start) * 1000}
 
         return wrapper
 

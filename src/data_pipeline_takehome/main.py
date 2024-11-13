@@ -1,34 +1,32 @@
 import argparse
 import json
 import time
+from typing import List
 
 from data_pipeline_takehome.tasks.filter_input_task import filter_input
-from data_pipeline_takehome.tasks.find_anagrams_task import find_anagrams
+from data_pipeline_takehome.tasks.find_anagrams_task import task_find_anagrams
 from data_pipeline_takehome.tasks.get_words_task import get_words
+from data_pipeline_takehome.tasks.permutations_task import task_permutations
+from data_pipeline_takehome.tasks.timer_decorator import timer
 
 
+@timer
 def anagram_analysis_pipeline(text_input: str):
-    start = time.perf_counter()
-
     filtered_input = filter_input(text_input)
     words = get_words(filtered_input)
 
-    all_anagrams = []
+    all_anagrams: List[str] = []
     for word in words:
+        permutations = task_permutations(word)
         print(f"Finding anagrams for {word}")
-        anagrams = find_anagrams(word)
+        anagrams = task_find_anagrams(permutations)
         all_anagrams += anagrams
 
-    anagram_counts = {}
-    for anagram in all_anagrams:
-        if anagram not in anagram_counts:
-            anagram_counts[anagram] = 0
-        anagram_counts[anagram] += 1
+    anagram_counts = {
+        anagram: all_anagrams.count(anagram) for anagram in set(all_anagrams)
+    }
 
-    end = time.perf_counter()
-    print(f"Text processing took {(end - start) * 1000}ms")
-
-    return {"runtime": (end - start) * 1000, "anagram_counts": anagram_counts}
+    return anagram_counts
 
 
 with open("src/data_pipeline_takehome/resources/test_cases.json") as file:
@@ -36,7 +34,9 @@ with open("src/data_pipeline_takehome/resources/test_cases.json") as file:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run the data pipeline with a specified test case.")
+    parser = argparse.ArgumentParser(
+        description="Run the data pipeline with a specified test case."
+    )
     parser.add_argument(
         "--test-case",
         type=str,
@@ -61,7 +61,9 @@ if __name__ == "__main__":
             result["runtime"] < test_case["expected"]["runtime"]
         ), f"Runtime {result['runtime']} exceeds expected {test_case['expected']['runtime']}"
         for anagram, count in test_case["expected"]["anagram_counts"].items():
-            assert anagram in result["anagram_counts"], f"Anagram '{anagram}' not found in result"
+            assert (
+                anagram in result["anagram_counts"]
+            ), f"Anagram '{anagram}' not found in result"
             assert (
                 result["anagram_counts"][anagram] == count
             ), f"Anagram '{anagram}' count {result['anagram_counts'][anagram]} differs from expected {count}"
